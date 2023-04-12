@@ -143,7 +143,8 @@ def address(request):
  return render(request, 'app/address.html', {'add': add, 'active': 'btn-primary'})
 
 def orders(request):
- return render(request, 'app/orders.html')
+ op = OrderPlaced.objects.filter(user=request.user)
+ return render(request, 'app/orders.html', {'order_placed':op})
 
 def mobile(request, data=None):
  if data == None:
@@ -207,8 +208,21 @@ def checkout(request):
   totalamount = amount + shipping_amount
  return render(request, 'app/checkout.html', {'add': add, 'cart_items': cart_items, 'totalcost': totalamount})
 
+def payment_done(request):
+ custid = request.GET.get('custid')
+ print("Customer ID", custid)
+ user = request.user
+ cartid = Cart.objects.filter(user=user)
+ customer = Customer.objects.get(id=custid)
+ print(customer)
+ for cid in cartid:
+  OrderPlaced(user=user, customer=customer, product=cid.product, quantity=cid.quantity).save()
+  print("Order Saved")
+  cid.delete()
+  print("Cart Item Deleted")
+ return redirect("orders")
 
- return render(request, 'app/checkout.html')
+
 
 class ProfileView(View):
  def get(self, request):
